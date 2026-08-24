@@ -7,6 +7,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 {
     public DbSet<Product> Products => Set<Product>();
     public DbSet<StockMovement> StockMovements => Set<StockMovement>();
+    public DbSet<Sale> Sales => Set<Sale>();
+    public DbSet<SaleItem> SaleItems => Set<SaleItem>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -15,6 +17,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(p => p.Name).IsRequired();
             entity.Property(p => p.Price).HasColumnType("decimal(18,2)");
             entity.HasIndex(p => p.Name);
+            entity.HasIndex(p => p.Barcode).IsUnique();
         });
 
         modelBuilder.Entity<StockMovement>(entity =>
@@ -24,6 +27,24 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 .HasForeignKey(m => m.ProductId)
                 .OnDelete(DeleteBehavior.Restrict);
             entity.HasIndex(m => m.ProductId);
+        });
+
+        modelBuilder.Entity<Sale>(entity =>
+        {
+            entity.Property(s => s.TotalAmount).HasColumnType("decimal(18,2)");
+            entity.Property(s => s.AmountPaid).HasColumnType("decimal(18,2)");
+            entity.Property(s => s.ChangeAmount).HasColumnType("decimal(18,2)");
+        });
+
+        modelBuilder.Entity<SaleItem>(entity =>
+        {
+            entity.Property(i => i.UnitPrice).HasColumnType("decimal(18,2)");
+            entity.Property(i => i.Subtotal).HasColumnType("decimal(18,2)");
+            entity.HasOne(i => i.Sale)
+                .WithMany(s => s.Items)
+                .HasForeignKey(i => i.SaleId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasIndex(i => i.ProductId);
         });
     }
 }

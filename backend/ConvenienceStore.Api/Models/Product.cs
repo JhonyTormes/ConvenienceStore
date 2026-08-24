@@ -12,6 +12,9 @@ public class Product
     [MaxLength(500)]
     public string? Description { get; set; }
 
+    [MaxLength(50)]
+    public string? Barcode { get; set; }
+
     [Range(0, double.MaxValue)]
     public decimal Price { get; set; }
 

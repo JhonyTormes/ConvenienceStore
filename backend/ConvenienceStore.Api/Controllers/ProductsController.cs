@@ -41,6 +41,17 @@ public class ProductsController(AppDbContext db) : ControllerBase
         return product is null ? NotFound() : Ok(product.ToResponse());
     }
 
+    [HttpGet("barcode/{barcode}")]
+    public async Task<ActionResult<ProductResponse>> GetByBarcode(string barcode)
+    {
+        var product = await db.Products
+            .AsNoTracking()
+            .Where(p => p.Barcode == barcode && p.IsActive)
+            .FirstOrDefaultAsync();
+
+        return product is null ? NotFound() : Ok(product.ToResponse());
+    }
+
     [HttpPost]
     public async Task<ActionResult<ProductResponse>> Create(CreateProductRequest request)
     {
@@ -48,6 +59,7 @@ public class ProductsController(AppDbContext db) : ControllerBase
         {
             Name = request.Name.Trim(),
             Description = request.Description?.Trim(),
+            Barcode = string.IsNullOrWhiteSpace(request.Barcode) ? null : request.Barcode.Trim(),
             Price = request.Price,
             StockQuantity = request.InitialStock
         };
@@ -78,6 +90,7 @@ public class ProductsController(AppDbContext db) : ControllerBase
 
         product.Name = request.Name.Trim();
         product.Description = request.Description?.Trim();
+        product.Barcode = string.IsNullOrWhiteSpace(request.Barcode) ? null : request.Barcode.Trim();
         product.Price = request.Price;
         product.UpdatedAt = DateTime.UtcNow;
 
