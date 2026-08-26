@@ -13,6 +13,7 @@ export default function ProductFormModal({ product, onClose, onSaved }: ProductF
   const isEditing = product !== null
   const [name, setName] = useState(product?.name ?? '')
   const [description, setDescription] = useState(product?.description ?? '')
+  const [barcode, setBarcode] = useState(product?.barcode ?? '')
   const [price, setPrice] = useState(product ? String(product.price) : '')
   const [initialStock, setInitialStock] = useState('0')
   const [error, setError] = useState<string | null>(null)
@@ -27,29 +28,31 @@ export default function ProductFormModal({ product, onClose, onSaved }: ProductF
         await api.updateProduct(product.id, {
           name,
           description: description || undefined,
+          barcode: barcode || undefined,
           price: Number(price),
         })
       } else {
         await api.createProduct({
           name,
           description: description || undefined,
+          barcode: barcode || undefined,
           price: Number(price),
           initialStock: Number(initialStock),
         })
       }
       onSaved()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong.')
+      setError(err instanceof Error ? err.message : 'Algo deu errado.')
     } finally {
       setSaving(false)
     }
   }
 
   return (
-    <Modal title={isEditing ? 'Edit product' : 'New product'} onClose={onClose}>
+    <Modal title={isEditing ? 'Editar produto' : 'Novo produto'} onClose={onClose}>
       <form onSubmit={handleSubmit}>
         <label>
-          Name *
+          Nome *
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -60,7 +63,7 @@ export default function ProductFormModal({ product, onClose, onSaved }: ProductF
         </label>
 
         <label>
-          Description
+          Descrição
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
@@ -70,7 +73,17 @@ export default function ProductFormModal({ product, onClose, onSaved }: ProductF
         </label>
 
         <label>
-          Price *
+          Código de barras
+          <input
+            value={barcode}
+            onChange={(e) => setBarcode(e.target.value)}
+            maxLength={50}
+            placeholder="Bipável no caixa"
+          />
+        </label>
+
+        <label>
+          Preço *
           <input
             type="number"
             value={price}
@@ -83,7 +96,7 @@ export default function ProductFormModal({ product, onClose, onSaved }: ProductF
 
         {!isEditing && (
           <label>
-            Initial stock
+            Estoque inicial
             <input
               type="number"
               value={initialStock}
@@ -98,10 +111,10 @@ export default function ProductFormModal({ product, onClose, onSaved }: ProductF
 
         <div className="form-actions">
           <button type="button" className="btn" onClick={onClose}>
-            Cancel
+            Cancelar
           </button>
           <button type="submit" className="btn btn-primary" disabled={saving}>
-            {saving ? 'Saving...' : 'Save'}
+            {saving ? 'Salvando...' : 'Salvar'}
           </button>
         </div>
       </form>

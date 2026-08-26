@@ -1,14 +1,14 @@
-import type { StockMovementType } from './types'
+import type { PaymentMethod, StockMovementType } from './types'
 
 export function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('en-US', {
+  return new Intl.NumberFormat('pt-BR', {
     style: 'currency',
     currency: 'BRL',
   }).format(value)
 }
 
 export function formatDate(value: string): string {
-  return new Date(value).toLocaleString('en-US', {
+  return new Date(value).toLocaleString('pt-BR', {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
@@ -20,10 +20,32 @@ export function formatDate(value: string): string {
 export function movementTypeLabel(type: StockMovementType): string {
   switch (type) {
     case 1:
-      return 'Stock in'
+      return 'Entrada'
     case 2:
-      return 'Stock out'
+      return 'Saída'
     case 3:
-      return 'Adjustment'
+      return 'Ajuste'
+  }
+}
+
+export function paymentMethodLabel(method: PaymentMethod): string {
+  switch (method) {
+    case 1:
+      return 'Dinheiro'
+    case 2:
+      return 'Cartão'
+    case 3:
+      return 'Pix'
+  }
+}
+
+export function paymentMethodIcon(method: PaymentMethod): string {
+  switch (method) {
+    case 1:
+      return '💵'
+    case 2:
+      return '💳'
+    case 3:
+      return '📱'
   }
 }

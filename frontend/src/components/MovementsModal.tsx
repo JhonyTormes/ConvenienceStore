@@ -18,28 +18,30 @@ export default function MovementsModal({ product, onClose }: MovementsModalProps
     api
       .getProductMovements(product.id)
       .then(setMovements)
-      .catch((err) => setError(err instanceof Error ? err.message : 'Failed to load movements.'))
+      .catch((err) =>
+        setError(err instanceof Error ? err.message : 'Falha ao carregar movimentos.'),
+      )
       .finally(() => setLoading(false))
   }, [product.id])
 
   return (
-    <Modal title={`Stock history - ${product.name}`} onClose={onClose}>
-      {loading && <p>Loading...</p>}
+    <Modal title={`Histórico de estoque - ${product.name}`} onClose={onClose}>
+      {loading && <p>Carregando...</p>}
       {error && <p className="form-error">{error}</p>}
 
       {!loading && !error && movements.length === 0 && (
-        <p className="empty">No stock movements for this product.</p>
+        <p className="empty">Nenhum movimento para este produto.</p>
       )}
 
       {!loading && movements.length > 0 && (
         <table className="table">
           <thead>
             <tr>
-              <th>Date</th>
-              <th>Type</th>
-              <th className="align-right">Quantity</th>
-              <th className="align-right">Stock after</th>
-              <th>Reason</th>
+              <th>Data</th>
+              <th>Tipo</th>
+              <th className="align-right">Quantidade</th>
+              <th className="align-right">Saldo</th>
+              <th>Motivo</th>
             </tr>
           </thead>
           <tbody>

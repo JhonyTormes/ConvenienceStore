@@ -11,9 +11,9 @@ interface StockAdjustModalProps {
 }
 
 const TYPES: { value: StockMovementType; hint: string }[] = [
-  { value: 1, hint: 'Adds to the current stock' },
-  { value: 2, hint: 'Removes from the current stock' },
-  { value: 3, hint: 'Sets the stock to the given quantity' },
+  { value: 1, hint: 'Soma na quantidade atual do estoque' },
+  { value: 2, hint: 'Diminui da quantidade atual do estoque' },
+  { value: 3, hint: 'Define o estoque exatamente para essa quantidade' },
 ]
 
 export default function StockAdjustModal({ product, onClose, onSaved }: StockAdjustModalProps) {
@@ -35,21 +35,21 @@ export default function StockAdjustModal({ product, onClose, onSaved }: StockAdj
       })
       onSaved()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong.')
+      setError(err instanceof Error ? err.message : 'Algo deu errado.')
     } finally {
       setSaving(false)
     }
   }
 
   return (
-    <Modal title={`Adjust stock - ${product.name}`} onClose={onClose}>
+    <Modal title={`Ajustar estoque - ${product.name}`} onClose={onClose}>
       <p className="stock-current">
-        Current stock: <strong>{product.stockQuantity}</strong> ({formatCurrency(product.price)} each)
+        Estoque atual: <strong>{product.stockQuantity}</strong> ({formatCurrency(product.price)} cada)
       </p>
 
       <form onSubmit={handleSubmit}>
         <label>
-          Movement type
+          Tipo de movimento
           <select value={type} onChange={(e) => setType(Number(e.target.value) as StockMovementType)}>
             {TYPES.map((t) => (
               <option key={t.value} value={t.value}>
@@ -61,7 +61,7 @@ export default function StockAdjustModal({ product, onClose, onSaved }: StockAdj
         <p className="field-hint">{TYPES.find((t) => t.value === type)?.hint}</p>
 
         <label>
-          Quantity
+          Quantidade
           <input
             type="number"
             value={quantity}
@@ -74,12 +74,12 @@ export default function StockAdjustModal({ product, onClose, onSaved }: StockAdj
         </label>
 
         <label>
-          Reason
+          Motivo
           <input
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             maxLength={500}
-            placeholder="e.g. supplier delivery, expired item, inventory count"
+            placeholder="ex.: entrega do fornecedor, produto vencido, contagem de inventário"
           />
         </label>
 
@@ -87,10 +87,10 @@ export default function StockAdjustModal({ product, onClose, onSaved }: StockAdj
 
         <div className="form-actions">
           <button type="button" className="btn" onClick={onClose}>
-            Cancel
+            Cancelar
           </button>
           <button type="submit" className="btn btn-primary" disabled={saving}>
-            {saving ? 'Saving...' : 'Save'}
+            {saving ? 'Salvando...' : 'Salvar'}
           </button>
         </div>
       </form>

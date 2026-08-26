@@ -1,7 +1,9 @@
 import type {
   AdjustStockRequest,
   CreateProductRequest,
+  CreateSaleRequest,
   Product,
+  Sale,
   StockMovement,
   UpdateProductRequest,
 } from './types'
@@ -38,6 +40,9 @@ export const api = {
   getProducts: (search?: string) =>
     request<Product[]>(`/products${search ? `?search=${encodeURIComponent(search)}` : ''}`),
 
+  getByBarcode: (barcode: string) =>
+    request<Product>(`/products/barcode/${encodeURIComponent(barcode)}`),
+
   createProduct: (data: CreateProductRequest) =>
     request<Product>('/products', { method: 'POST', body: JSON.stringify(data) }),
 
@@ -58,4 +63,11 @@ export const api = {
 
   getStockMovements: (limit = 200) =>
     request<StockMovement[]>(`/stock-movements?limit=${limit}`),
+
+  createSale: (data: CreateSaleRequest) =>
+    request<Sale>('/sales', { method: 'POST', body: JSON.stringify(data) }),
+
+  getSales: (limit = 100) => request<Sale[]>(`/sales?limit=${limit}`),
+
+  getSale: (id: number) => request<Sale>(`/sales/${id}`),
 }
