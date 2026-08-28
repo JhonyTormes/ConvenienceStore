@@ -427,6 +427,13 @@ nav {
   color: var(--text-muted);
 }
 
+.pdv-qty-hint {
+  margin-top: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--primary);
+}
+
 .pdv-right {
   display: flex;
   flex-direction: column;

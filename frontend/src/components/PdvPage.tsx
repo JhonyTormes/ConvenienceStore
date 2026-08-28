@@ -18,6 +18,8 @@ export default function PdvPage() {
   const [error, setError] = useState<string | null>(null)
   const [paymentOpen, setPaymentOpen] = useState(false)
   const [finishedSale, setFinishedSale] = useState<Sale | null>(null)
+  const [mode, setMode] = useState<'product' | 'quantity'>('product')
+  const [pendingQuantity, setPendingQuantity] = useState(1)
   const inputRef = useRef<HTMLInputElement>(null)
 
   const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0)
@@ -27,6 +29,7 @@ export default function PdvPage() {
   }, [])
 
   useEffect(() => {
+    if (mode !== 'product') return
     const timer = setTimeout(async () => {
       const search = term.trim()
       if (!search) {
@@ -40,7 +43,7 @@ export default function PdvPage() {
       }
     }, 300)
     return () => clearTimeout(timer)
-  }, [term])
+  }, [term, mode])
 
   async function handleScan() {
     const code = term.trim()
@@ -56,16 +59,18 @@ export default function PdvPage() {
   }
 
   function addToCart(product: Product) {
+    const quantity = pendingQuantity
+    setPendingQuantity(1)
     setCart((prev) => {
       const existing = prev.find((i) => i.productId === product.id)
       if (existing) {
         return prev.map((i) =>
-          i.productId === product.id ? { ...i, quantity: i.quantity + 1 } : i,
+          i.productId === product.id ? { ...i, quantity: i.quantity + quantity } : i,
         )
       }
       return [
         ...prev,
-        { productId: product.id, name: product.name, price: product.price, quantity: 1 },
+        { productId: product.id, name: product.name, price: product.price, quantity },
       ]
     })
     setError(null)
@@ -115,6 +120,8 @@ export default function PdvPage() {
             setCart([])
             setTerm('')
             setResults([])
+            setMode('product')
+            setPendingQuantity(1)
             inputRef.current?.focus()
           }}
         >
@@ -130,16 +137,54 @@ export default function PdvPage() {
         <input
           ref={inputRef}
           className="pdv-search"
-          placeholder="🔍 Buscar produto ou bipar código"
+          placeholder={
+            mode === 'quantity'
+              ? '🔢 Digite a quantidade e aperte Enter'
+              : '🔍 Buscar produto ou bipar código'
+          }
           value={term}
           onChange={(e) => setTerm(e.target.value)}
           onKeyDown={(e) => {
+            if (e.key === 'x' || e.key === 'X') {
+              e.preventDefault()
+              setTerm('')
+              setMode((m) => (m === 'product' ? 'quantity' : 'product'))
+              return
+            }
+            if (mode === 'quantity') {
+              if (e.key === 'Escape') {
+                e.preventDefault()
+                setTerm('')
+                setMode('product')
+                return
+              }
+              if (e.key === 'Enter') {
+                e.preventDefault()
+                const qty = parseInt(term.trim(), 10)
+                if (!Number.isNaN(qty) && qty > 0) setPendingQuantity(qty)
+                setTerm('')
+                setMode('product')
+                return
+              }
+              return
+            }
             if (e.key === 'Enter') {
               e.preventDefault()
               handleScan()
             }
           }}
         />
+
+        {mode === 'quantity' && (
+          <p className="pdv-qty-hint">
+            Modo quantidade: digite a quantidade e aperte Enter (Esc para cancelar).
+          </p>
+        )}
+        {mode === 'product' && pendingQuantity > 1 && (
+          <p className="pdv-qty-hint">
+            Próximo produto entra com {pendingQuantity} unidade(s).
+          </p>
+        )}
 
         {error && <p className="form-error">{error}</p>}
 
@@ -160,7 +205,7 @@ export default function PdvPage() {
         )}
 
         <div className="pdv-help">
-          <p>💡 Digite o nome do produto e toque nele, ou bata o código de barras.</p>
+          <p>💡 Digite o nome do produto e toque nele, ou bata o código de barras. Aperte x para digitar a quantidade.</p>
         </div>
       </section>
 
