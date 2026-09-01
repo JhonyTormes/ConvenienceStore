@@ -1,20 +1,22 @@
 import { useEffect, useState } from 'react'
 import { api } from './api'
+import CustomerFormModal from './components/CustomerFormModal'
 import MovementsModal from './components/MovementsModal'
 import PdvPage from './components/PdvPage'
 import ProductFormModal from './components/ProductFormModal'
 import SalesHistory from './components/SalesHistory'
 import StockAdjustModal from './components/StockAdjustModal'
 import { formatCurrency, formatDate, movementTypeLabel } from './format'
-import type { Product, StockMovement } from './types'
+import type { Customer, Product, StockMovement } from './types'
 
-type Tab = 'pdv' | 'products' | 'sales' | 'movements'
+type Tab = 'pdv' | 'products' | 'sales' | 'movements' | 'customers'
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'pdv', label: '🛒 Caixa' },
   { id: 'products', label: '📦 Produtos' },
   { id: 'sales', label: '🧾 Vendas' },
   { id: 'movements', label: '📊 Estoque' },
+  { id: 'customers', label: '👥 Clientes' },
 ]
 
 export default function App() {
@@ -29,7 +31,13 @@ export default function App() {
   const [adjustProduct, setAdjustProduct] = useState<Product | null>(null)
   const [movementsProduct, setMovementsProduct] = useState<Product | null>(null)
 
+  const [customers, setCustomers] = useState<Customer[] | null>(null)
+  const [customerSearch, setCustomerSearch] = useState('')
+  const [customerFormOpen, setCustomerFormOpen] = useState(false)
+  const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null)
+
   const loading = products === null
+  const customersLoading = customers === null
 
   useEffect(() => {
     let cancelled = false
@@ -69,6 +77,28 @@ export default function App() {
     }
   }, [tab])
 
+  useEffect(() => {
+    let cancelled = false
+    const timer = setTimeout(async () => {
+      try {
+        const data = await api.getCustomers(customerSearch || undefined)
+        if (!cancelled) {
+          setCustomers(data)
+          setError(null)
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setCustomers([])
+          setError(err instanceof Error ? err.message : 'Falha ao carregar clientes.')
+        }
+      }
+    }, 300)
+    return () => {
+      cancelled = true
+      clearTimeout(timer)
+    }
+  }, [customerSearch])
+
   async function reloadProducts() {
     try {
       setProducts(await api.getProducts(search || undefined))
@@ -104,6 +134,35 @@ export default function App() {
   function openEditProduct(product: Product) {
     setEditingProduct(product)
     setFormOpen(true)
+  }
+
+  async function reloadCustomers() {
+    try {
+      setCustomers(await api.getCustomers(customerSearch || undefined))
+      setError(null)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Falha ao carregar clientes.')
+    }
+  }
+
+  async function handleDeleteCustomer(customer: Customer) {
+    if (!window.confirm(`Excluir "${customer.name}"?`)) return
+    try {
+      await api.deleteCustomer(customer.id)
+      await reloadCustomers()
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Falha ao excluir cliente.')
+    }
+  }
+
+  function openNewCustomer() {
+    setEditingCustomer(null)
+    setCustomerFormOpen(true)
+  }
+
+  function openEditCustomer(customer: Customer) {
+    setEditingCustomer(customer)
+    setCustomerFormOpen(true)
   }
 
   return (
@@ -238,6 +297,58 @@ export default function App() {
             )}
           </div>
         )}
+        {tab === 'customers' && (
+          <>
+            <div className="toolbar">
+              <input
+                className="search"
+                placeholder="Buscar clientes..."
+                value={customerSearch}
+                onChange={(e) => setCustomerSearch(e.target.value)}
+              />
+              <button className="btn btn-primary" onClick={openNewCustomer}>
+                ➕ Novo cliente
+              </button>
+            </div>
+
+            {customersLoading ? (
+              <p className="empty">Carregando...</p>
+            ) : customers.length === 0 ? (
+              <p className="empty">Nenhum cliente encontrado.</p>
+            ) : (
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Nome</th>
+                    <th>CPF</th>
+                    <th>Telefone</th>
+                    <th className="align-right">Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {customers.map((c) => (
+                    <tr key={c.id}>
+                      <td className="product-name">{c.name}</td>
+                      <td>{c.cpf || '-'}</td>
+                      <td>{c.phone || '-'}</td>
+                      <td className="align-right actions">
+                        <button className="btn btn-small" onClick={() => openEditCustomer(c)}>
+                          Editar
+                        </button>
+                        <button
+                          className="btn btn-small btn-danger"
+                          onClick={() => handleDeleteCustomer(c)}
+                        >
+                          Excluir
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </>
+        )}
       </main>
 
       {formOpen && (
@@ -264,6 +375,17 @@ export default function App() {
 
       {movementsProduct && (
         <MovementsModal product={movementsProduct} onClose={() => setMovementsProduct(null)} />
+      )}
+
+      {customerFormOpen && (
+        <CustomerFormModal
+          customer={editingCustomer}
+          onClose={() => setCustomerFormOpen(false)}
+          onSaved={() => {
+            setCustomerFormOpen(false)
+            reloadCustomers()
+          }}
+        />
       )}
     </div>
   )

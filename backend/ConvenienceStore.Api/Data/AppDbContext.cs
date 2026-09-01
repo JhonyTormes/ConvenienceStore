@@ -9,6 +9,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<StockMovement> StockMovements => Set<StockMovement>();
     public DbSet<Sale> Sales => Set<Sale>();
     public DbSet<SaleItem> SaleItems => Set<SaleItem>();
+    public DbSet<Customer> Customers => Set<Customer>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -45,6 +46,12 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 .HasForeignKey(i => i.SaleId)
                 .OnDelete(DeleteBehavior.Cascade);
             entity.HasIndex(i => i.ProductId);
+        });
+
+        modelBuilder.Entity<Customer>(entity =>
+        {
+            entity.Property(c => c.Name).IsRequired();
+            entity.HasIndex(c => c.Cpf).IsUnique();
         });
     }
 }

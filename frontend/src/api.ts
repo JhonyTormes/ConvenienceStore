@@ -1,10 +1,13 @@
 import type {
   AdjustStockRequest,
+  CreateCustomerRequest,
   CreateProductRequest,
   CreateSaleRequest,
+  Customer,
   Product,
   Sale,
   StockMovement,
+  UpdateCustomerRequest,
   UpdateProductRequest,
 } from './types'
 
@@ -70,4 +73,18 @@ export const api = {
   getSales: (limit = 100) => request<Sale[]>(`/sales?limit=${limit}`),
 
   getSale: (id: number) => request<Sale>(`/sales/${id}`),
+
+  getCustomers: (search?: string) =>
+    request<Customer[]>(
+      `/customers${search ? `?search=${encodeURIComponent(search)}` : ''}`,
+    ),
+
+  createCustomer: (data: CreateCustomerRequest) =>
+    request<Customer>('/customers', { method: 'POST', body: JSON.stringify(data) }),
+
+  updateCustomer: (id: number, data: UpdateCustomerRequest) =>
+    request<Customer>(`/customers/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+
+  deleteCustomer: (id: number) =>
+    request<void>(`/customers/${id}`, { method: 'DELETE' }),
 }

@@ -75,3 +75,23 @@ export interface CreateSaleRequest {
   paymentMethod: PaymentMethod
   amountPaid: number
 }
+
+export interface Customer {
+  id: number
+  name: string
+  cpf?: string | null
+  phone?: string | null
+  createdAt: string
+}
+
+export interface CreateCustomerRequest {
+  name: string
+  cpf?: string
+  phone?: string
+}
+
+export interface UpdateCustomerRequest {
+  name: string
+  cpf?: string
+  phone?: string
+}
