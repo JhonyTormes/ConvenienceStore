@@ -1,4 +1,5 @@
 using ConvenienceStore.Api.Data;
+using ConvenienceStore.Api.Services;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -8,6 +9,13 @@ builder.Services.AddOpenApi();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.AddHttpClient<SolanaPayBridgeClient>(client =>
+{
+    var baseUrl = builder.Configuration["SolanaPayBridge:BaseUrl"] ?? "http://127.0.0.1:9000";
+    client.BaseAddress = new Uri(baseUrl.EndsWith('/') ? baseUrl : baseUrl + "/");
+    client.Timeout = TimeSpan.FromMinutes(6);
+});
 
 builder.Services.AddCors(options =>
 {

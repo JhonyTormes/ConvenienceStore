@@ -566,7 +566,7 @@ nav {
 
 .payment-methods {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 10px;
 }
 
@@ -615,6 +615,33 @@ nav {
 
 .change-box strong {
   font-size: 26px;
+}
+
+/* ---------- Espera do Solana Pay ---------- */
+
+.solana-waiting {
+  text-align: center;
+  padding: 8px 0 4px;
+}
+
+.solana-waiting-icon {
+  font-size: 56px;
+}
+
+.solana-waiting-text {
+  font-size: 17px;
+  margin: 12px 0;
+  line-height: 1.5;
+}
+
+.solana-waiting-total {
+  font-size: 18px;
+  margin: 0 0 16px;
+}
+
+.solana-waiting-total strong {
+  font-size: 28px;
+  color: var(--primary);
 }
 
 /* ---------- Sucesso da venda ---------- */
@@ -674,4 +701,11 @@ nav {
 .sale-detail-footer strong {
   font-size: 20px;
   color: var(--primary);
+}
+
+.sale-detail-signature {
+  color: var(--text-muted);
+  font-size: 12px !important;
+  word-break: break-all;
+  margin-top: 10px !important;
 }

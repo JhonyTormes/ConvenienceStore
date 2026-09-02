@@ -44,7 +44,7 @@ export interface AdjustStockRequest {
   reason?: string
 }
 
-export type PaymentMethod = 1 | 2 | 3
+export type PaymentMethod = 1 | 2 | 3 | 4
 
 export interface SaleItem {
   id: number
@@ -62,6 +62,7 @@ export interface Sale {
   paymentMethod: PaymentMethod
   amountPaid: number
   changeAmount: number
+  paymentSignature?: string | null
   items: SaleItem[]
 }
 

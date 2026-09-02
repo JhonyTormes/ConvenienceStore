@@ -1,6 +1,7 @@
 using ConvenienceStore.Api.Data;
 using ConvenienceStore.Api.DTOs;
 using ConvenienceStore.Api.Models;
+using ConvenienceStore.Api.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,16 +9,41 @@ namespace ConvenienceStore.Api.Controllers;
 
 [ApiController]
 [Route("api/sales")]
-public class SalesController(AppDbContext db) : ControllerBase
+public class SalesController(AppDbContext db, SolanaPayBridgeClient solanaPay) : ControllerBase
 {
     [HttpPost]
-    public async Task<ActionResult<SaleResponse>> Create(CreateSaleRequest request)
+    public async Task<ActionResult<SaleResponse>> Create(CreateSaleRequest request, CancellationToken ct)
     {
         if (request.Items.Count == 0)
             return BadRequest(new { message = "A sale must have at least one item." });
 
+        var buildResult = BuildSale(request);
+        if (buildResult.Error is not null)
+            return BadRequest(new { message = buildResult.Error });
+
+        var sale = buildResult.Sale!;
+
+        if (request.PaymentMethod == PaymentMethod.SolanaPay)
+        {
+            var orderId = $"POS-{Guid.NewGuid():N}"[..12];
+            var payment = await solanaPay.RequestPaymentAsync(sale.TotalAmount, orderId, ct);
+
+            if (!payment.Success)
+                return BadRequest(new { message = payment.Message, paymentStatus = payment.Status });
+
+            sale.PaymentSignature = payment.Signature;
+        }
+
+        db.Sales.Add(sale);
+        await db.SaveChangesAsync();
+
+        return CreatedAtAction(nameof(GetById), new { id = sale.Id }, sale.ToResponse());
+    }
+
+    private (Sale? Sale, string? Error) BuildSale(CreateSaleRequest request)
+    {
         var productIds = request.Items.Select(i => i.ProductId).Distinct().ToList();
-        var products = await db.Products.Where(p => productIds.Contains(p.Id)).ToListAsync();
+        var products = db.Products.Where(p => productIds.Contains(p.Id)).ToList();
         var productById = products.ToDictionary(p => p.Id);
 
         var sale = new Sale();
@@ -26,10 +52,10 @@ public class SalesController(AppDbContext db) : ControllerBase
         foreach (var item in request.Items)
         {
             if (!productById.TryGetValue(item.ProductId, out var product) || !product.IsActive)
-                return BadRequest(new { message = $"Product {item.ProductId} was not found." });
+                return (null, $"Product {item.ProductId} was not found.");
 
             if (product.StockQuantity < item.Quantity)
-                return BadRequest(new { message = $"Not enough stock for '{product.Name}'." });
+                return (null, $"Not enough stock for '{product.Name}'.");
 
             var subtotal = product.Price * item.Quantity;
             sale.Items.Add(new SaleItem
@@ -57,14 +83,11 @@ public class SalesController(AppDbContext db) : ControllerBase
         sale.AmountPaid = request.AmountPaid;
 
         if (sale.AmountPaid < sale.TotalAmount)
-            return BadRequest(new { message = "The amount paid is less than the total." });
+            return (null, "The amount paid is less than the total.");
 
         sale.ChangeAmount = sale.AmountPaid - sale.TotalAmount;
 
-        db.Sales.Add(sale);
-        await db.SaveChangesAsync();
-
-        return CreatedAtAction(nameof(GetById), new { id = sale.Id }, sale.ToResponse());
+        return (sale, null);
     }
 
     [HttpGet]

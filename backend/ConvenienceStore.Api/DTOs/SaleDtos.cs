@@ -29,6 +29,7 @@ public class SaleResponse
     public PaymentMethod PaymentMethod { get; set; }
     public decimal AmountPaid { get; set; }
     public decimal ChangeAmount { get; set; }
+    public string? PaymentSignature { get; set; }
     public List<SaleItemResponse> Items { get; set; } = [];
 }
 
@@ -51,6 +52,7 @@ public static class SaleMapper
         PaymentMethod = sale.PaymentMethod,
         AmountPaid = sale.AmountPaid,
         ChangeAmount = sale.ChangeAmount,
+        PaymentSignature = sale.PaymentSignature,
         Items = sale.Items.Select(i => new SaleItemResponse
         {
             ProductId = i.ProductId,

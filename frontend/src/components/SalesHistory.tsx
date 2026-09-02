@@ -37,6 +37,9 @@ function SaleDetailModal({ sale, onClose }: { sale: Sale; onClose: () => void })
         </p>
         <p>Pago: {formatCurrency(sale.amountPaid)}</p>
         {sale.changeAmount > 0 && <p>Troco: {formatCurrency(sale.changeAmount)}</p>}
+        {sale.paymentSignature && (
+          <p className="sale-detail-signature">Assinatura: {sale.paymentSignature}</p>
+        )}
       </div>
     </Modal>
   )

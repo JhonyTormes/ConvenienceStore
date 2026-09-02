@@ -67,8 +67,8 @@ export const api = {
   getStockMovements: (limit = 200) =>
     request<StockMovement[]>(`/stock-movements?limit=${limit}`),
 
-  createSale: (data: CreateSaleRequest) =>
-    request<Sale>('/sales', { method: 'POST', body: JSON.stringify(data) }),
+  createSale: (data: CreateSaleRequest, signal?: AbortSignal) =>
+    request<Sale>('/sales', { method: 'POST', body: JSON.stringify(data), signal }),
 
   getSales: (limit = 100) => request<Sale[]>(`/sales?limit=${limit}`),
 

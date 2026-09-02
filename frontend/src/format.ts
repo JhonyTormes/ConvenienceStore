@@ -36,6 +36,8 @@ export function paymentMethodLabel(method: PaymentMethod): string {
       return 'Cartão'
     case 3:
       return 'Pix'
+    case 4:
+      return 'Solana Pay'
   }
 }
 
@@ -47,5 +49,7 @@ export function paymentMethodIcon(method: PaymentMethod): string {
       return '💳'
     case 3:
       return '📱'
+    case 4:
+      return '⚡'
   }
 }

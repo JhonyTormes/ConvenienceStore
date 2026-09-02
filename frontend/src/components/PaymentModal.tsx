@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useRef, useState, type FormEvent } from 'react'
 import { api } from '../api'
 import { formatCurrency, paymentMethodIcon, paymentMethodLabel } from '../format'
 import type { PaymentMethod, Sale, SaleItemRequest } from '../types'
@@ -11,15 +11,18 @@ interface PaymentModalProps {
   onComplete: (sale: Sale) => void
 }
 
-const METHODS: PaymentMethod[] = [1, 2, 3]
+const METHODS: PaymentMethod[] = [1, 2, 3, 4]
 
 export default function PaymentModal({ total, items, onClose, onComplete }: PaymentModalProps) {
   const [method, setMethod] = useState<PaymentMethod>(1)
   const [received, setReceived] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  const [waiting, setWaiting] = useState(false)
+  const abortRef = useRef<AbortController | null>(null)
 
   const isCash = method === 1
+  const isSolana = method === 4
   const receivedValue = Number(received) || 0
   const change = isCash ? Math.max(0, receivedValue - total) : 0
   const amountPaid = isCash ? receivedValue : total
@@ -29,18 +32,65 @@ export default function PaymentModal({ total, items, onClose, onComplete }: Paym
     e.preventDefault()
     if (!canConfirm) return
     setError(null)
+
+    if (isSolana) {
+      const controller = new AbortController()
+      abortRef.current = controller
+      setWaiting(true)
+      try {
+        const sale = await api.createSale(
+          { items, paymentMethod: method, amountPaid },
+          controller.signal,
+        )
+        onComplete(sale)
+      } catch (err) {
+        if (controller.signal.aborted) {
+          setWaiting(false)
+          return
+        }
+        setError(err instanceof Error ? err.message : 'Falha ao finalizar a venda.')
+        setWaiting(false)
+      } finally {
+        abortRef.current = null
+      }
+      return
+    }
+
     setSaving(true)
     try {
-      const sale = await api.createSale({
-        items,
-        paymentMethod: method,
-        amountPaid,
-      })
+      const sale = await api.createSale({ items, paymentMethod: method, amountPaid })
       onComplete(sale)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Falha ao finalizar a venda.')
       setSaving(false)
     }
+  }
+
+  function cancelWaiting() {
+    abortRef.current?.abort()
+    setWaiting(false)
+  }
+
+  if (waiting) {
+    return (
+      <Modal title="Pagamento com Solana Pay" onClose={cancelWaiting}>
+        <div className="solana-waiting">
+          <span className="solana-waiting-icon">⚡</span>
+          <p className="solana-waiting-text">
+            Peça ao cliente para escanear o <strong>QR Code na tela do caixa</strong> e pagar com a
+            carteira Solana.
+          </p>
+          <p className="solana-waiting-total">
+            Total: <strong>{formatCurrency(total)}</strong>
+          </p>
+          <div className="form-actions">
+            <button type="button" className="btn" onClick={cancelWaiting}>
+              Cancelar
+            </button>
+          </div>
+        </div>
+      </Modal>
+    )
   }
 
   return (
@@ -92,8 +142,10 @@ export default function PaymentModal({ total, items, onClose, onComplete }: Paym
           </>
         ) : (
           <p className="field-hint">
-            Pagamento via {paymentMethodLabel(method).toLowerCase()}: sem troco. Confira o valor e
-            confirme.
+            {isSolana
+              ? 'O QR Code vai aparecer na tela do caixa. O cliente escaneia e paga com a carteira Solana.'
+              : `Pagamento via ${paymentMethodLabel(method).toLowerCase()}: sem troco. Confira o valor e
+            confirme.`}
           </p>
         )}
 
@@ -104,7 +156,7 @@ export default function PaymentModal({ total, items, onClose, onComplete }: Paym
             Cancelar
           </button>
           <button type="submit" className="btn btn-primary" disabled={!canConfirm || saving}>
-            {saving ? 'Finalizando...' : '✅ Confirmar venda'}
+            {saving ? 'Finalizando...' : isSolana ? '⚡ Mostrar QR Code' : '✅ Confirmar venda'}
           </button>
         </div>
       </form>

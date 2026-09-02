@@ -72,6 +72,44 @@ ConvenienceStore/
 | ------ | ---------------------- | ---------------------------------------------- |
 | `GET`  | `/api/stock-movements` | List movements (`?productId=`, `?limit=`)      |
 
+### Sales
+
+| Method | Endpoint    | Description                                            |
+| ------ | ----------- | ------------------------------------------------------ |
+| `POST` | `/api/sales` | Create a sale (decrements stock, records movements)    |
+| `GET`  | `/api/sales` | List sales (`?limit=`)                                 |
+| `GET`  | `/api/sales/{id}` | Get a single sale                                |
+
+Payment methods: `1` = Cash, `2` = Card, `3` = Pix, `4` = Solana Pay (USDC).
+
+## Solana Pay Integration
+
+Sales can be paid with **Solana Pay** (payment method `4`). This requires the
+[SolanaPayPDVBridge](../Hackaton/SolanaPayPDVBridge) middleware running on the same
+machine. The bridge shows the QR Code in a full-screen overlay on the POS computer.
+
+Flow:
+
+1. The frontend sends `POST /api/sales` with `paymentMethod: 4`. The request stays
+   open (long poll) until the payment ends.
+2. The backend validates stock, then calls the bridge at `POST /pay`
+   (`SolanaPayBridge:BaseUrl`, default `http://127.0.0.1:9000`) with the total in BRL.
+3. The bridge converts BRL to USDC, shows the QR Code and polls the Solana devnet
+   until the customer pays, cancels, or the QR expires.
+4. On success the sale is recorded (stock decremented, movements logged) together
+   with the transaction signature (`paymentSignature`). On cancel/timeout/failure
+   nothing is recorded and the frontend shows the reason.
+
+Configuration (`appsettings.json`):
+
+```json
+"SolanaPayBridge": {
+  "BaseUrl": "http://127.0.0.1:9000"
+}
+```
+
+See the bridge README for demo preparation (devnet wallets, faucets, token account).
+
 ## Data Model
 
 - **Product**: `Id`, `Name`, `Description`, `Price`, `StockQuantity`, `IsActive`,

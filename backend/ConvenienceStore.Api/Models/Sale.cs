@@ -4,7 +4,8 @@ public enum PaymentMethod
 {
     Cash = 1,
     Card = 2,
-    Pix = 3
+    Pix = 3,
+    SolanaPay = 4
 }
 
 public class Sale
@@ -20,6 +21,8 @@ public class Sale
     public decimal AmountPaid { get; set; }
 
     public decimal ChangeAmount { get; set; }
+
+    public string? PaymentSignature { get; set; }
 
     public List<SaleItem> Items { get; set; } = [];
 }
