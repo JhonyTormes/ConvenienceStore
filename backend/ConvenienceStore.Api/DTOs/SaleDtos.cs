@@ -7,7 +7,7 @@ public class CreateSaleRequest
 {
     public List<SaleItemRequest> Items { get; set; } = [];
 
-    public PaymentMethod PaymentMethod { get; set; }
+    public int PaymentMethodId { get; set; }
 
     [Range(0, double.MaxValue)]
     public decimal AmountPaid { get; set; }
@@ -26,7 +26,8 @@ public class SaleResponse
     public int Id { get; set; }
     public DateTime CreatedAt { get; set; }
     public decimal TotalAmount { get; set; }
-    public PaymentMethod PaymentMethod { get; set; }
+    public int PaymentMethodId { get; set; }
+    public string PaymentMethodName { get; set; } = string.Empty;
     public decimal AmountPaid { get; set; }
     public decimal ChangeAmount { get; set; }
     public string? PaymentSignature { get; set; }
@@ -49,7 +50,8 @@ public static class SaleMapper
         Id = sale.Id,
         CreatedAt = sale.CreatedAt,
         TotalAmount = sale.TotalAmount,
-        PaymentMethod = sale.PaymentMethod,
+        PaymentMethodId = sale.PaymentMethodId,
+        PaymentMethodName = sale.PaymentMethod?.Name ?? string.Empty,
         AmountPaid = sale.AmountPaid,
         ChangeAmount = sale.ChangeAmount,
         PaymentSignature = sale.PaymentSignature,

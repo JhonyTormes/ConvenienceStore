@@ -47,6 +47,58 @@ namespace ConvenienceStore.Api.Migrations
                     b.ToTable("Customers");
                 });
 
+            modelBuilder.Entity("ConvenienceStore.Api.Models.PaymentMethod", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("PaymentMethods");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            DisplayOrder = 1,
+                            IsActive = true,
+                            Name = "Dinheiro"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            DisplayOrder = 2,
+                            IsActive = true,
+                            Name = "Cartão"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            DisplayOrder = 3,
+                            IsActive = true,
+                            Name = "Pix"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            DisplayOrder = 4,
+                            IsActive = true,
+                            Name = "Solana Pay"
+                        });
+                });
+
             modelBuilder.Entity("ConvenienceStore.Api.Models.Product", b =>
                 {
                     b.Property<int>("Id")
@@ -106,7 +158,7 @@ namespace ConvenienceStore.Api.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("PaymentMethod")
+                    b.Property<int>("PaymentMethodId")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("PaymentSignature")
@@ -116,6 +168,8 @@ namespace ConvenienceStore.Api.Migrations
                         .HasColumnType("decimal(18,2)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("PaymentMethodId");
 
                     b.ToTable("Sales");
                 });
@@ -184,6 +238,17 @@ namespace ConvenienceStore.Api.Migrations
                     b.HasIndex("ProductId");
 
                     b.ToTable("StockMovements");
+                });
+
+            modelBuilder.Entity("ConvenienceStore.Api.Models.Sale", b =>
+                {
+                    b.HasOne("ConvenienceStore.Api.Models.PaymentMethod", "PaymentMethod")
+                        .WithMany()
+                        .HasForeignKey("PaymentMethodId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("PaymentMethod");
                 });
 
             modelBuilder.Entity("ConvenienceStore.Api.Models.SaleItem", b =>

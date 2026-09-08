@@ -2,14 +2,15 @@ import { useEffect, useState } from 'react'
 import { api } from './api'
 import CustomerFormModal from './components/CustomerFormModal'
 import MovementsModal from './components/MovementsModal'
+import PaymentMethodFormModal from './components/PaymentMethodFormModal'
 import PdvPage from './components/PdvPage'
 import ProductFormModal from './components/ProductFormModal'
 import SalesHistory from './components/SalesHistory'
 import StockAdjustModal from './components/StockAdjustModal'
-import { formatCurrency, formatDate, movementTypeLabel } from './format'
-import type { Customer, Product, StockMovement } from './types'
+import { formatCurrency, formatDate, movementTypeLabel, paymentMethodIcon } from './format'
+import type { Customer, PaymentMethod, Product, StockMovement } from './types'
 
-type Tab = 'pdv' | 'products' | 'sales' | 'movements' | 'customers'
+type Tab = 'pdv' | 'products' | 'sales' | 'movements' | 'customers' | 'payments'
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'pdv', label: '🛒 Caixa' },
@@ -17,6 +18,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'sales', label: '🧾 Vendas' },
   { id: 'movements', label: '📊 Estoque' },
   { id: 'customers', label: '👥 Clientes' },
+  { id: 'payments', label: '💳 Pagamentos' },
 ]
 
 export default function App() {
@@ -35,6 +37,10 @@ export default function App() {
   const [customerSearch, setCustomerSearch] = useState('')
   const [customerFormOpen, setCustomerFormOpen] = useState(false)
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null)
+
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[] | null>(null)
+  const [paymentFormOpen, setPaymentFormOpen] = useState(false)
+  const [editingPayment, setEditingPayment] = useState<PaymentMethod | null>(null)
 
   const loading = products === null
   const customersLoading = customers === null
@@ -163,6 +169,62 @@ export default function App() {
   function openEditCustomer(customer: Customer) {
     setEditingCustomer(customer)
     setCustomerFormOpen(true)
+  }
+
+  async function reloadPaymentMethods() {
+    try {
+      setPaymentMethods(await api.getPaymentMethods())
+      setError(null)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Falha ao carregar as formas de pagamento.')
+    }
+  }
+
+  useEffect(() => {
+    let cancelled = false
+    api
+      .getPaymentMethods()
+      .then((data) => {
+        if (!cancelled) setPaymentMethods(data)
+      })
+      .catch((err) => {
+        if (!cancelled) setError(err instanceof Error ? err.message : 'Falha ao carregar as formas de pagamento.')
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  async function handleTogglePayment(paymentMethod: PaymentMethod) {
+    try {
+      await api.updatePaymentMethod(paymentMethod.id, {
+        name: paymentMethod.name,
+        isActive: !paymentMethod.isActive,
+      })
+      await reloadPaymentMethods()
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Falha ao atualizar a forma de pagamento.')
+    }
+  }
+
+  async function handleDeletePayment(paymentMethod: PaymentMethod) {
+    if (!window.confirm(`Excluir "${paymentMethod.name}"?`)) return
+    try {
+      await api.deletePaymentMethod(paymentMethod.id)
+      await reloadPaymentMethods()
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Falha ao excluir a forma de pagamento.')
+    }
+  }
+
+  function openNewPayment() {
+    setEditingPayment(null)
+    setPaymentFormOpen(true)
+  }
+
+  function openEditPayment(paymentMethod: PaymentMethod) {
+    setEditingPayment(paymentMethod)
+    setPaymentFormOpen(true)
   }
 
   return (
@@ -349,6 +411,68 @@ export default function App() {
             )}
           </>
         )}
+        {tab === 'payments' && (
+          <>
+            <div className="toolbar">
+              <h2>💳 Formas de pagamento</h2>
+              <button className="btn btn-primary" onClick={openNewPayment}>
+                ➕ Nova forma
+              </button>
+            </div>
+
+            {paymentMethods === null ? (
+              <p className="empty">Carregando...</p>
+            ) : paymentMethods.length === 0 ? (
+              <p className="empty">Nenhuma forma de pagamento cadastrada.</p>
+            ) : (
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Nome</th>
+                    <th>Situação</th>
+                    <th className="align-right">Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {paymentMethods.map((pm) => (
+                    <tr key={pm.id}>
+                      <td className="product-name">
+                        {paymentMethodIcon(pm.id)} {pm.name}
+                      </td>
+                      <td>
+                        <span className={pm.isActive ? 'text-green' : 'text-red'}>
+                          {pm.isActive ? 'Ativa' : 'Desativada'}
+                        </span>
+                      </td>
+                      <td className="align-right actions">
+                        <button
+                          className="btn btn-small"
+                          onClick={() => handleTogglePayment(pm)}
+                        >
+                          {pm.isActive ? 'Desativar' : 'Ativar'}
+                        </button>
+                        <button className="btn btn-small" onClick={() => openEditPayment(pm)}>
+                          Editar
+                        </button>
+                        <button
+                          className="btn btn-small btn-danger"
+                          onClick={() => handleDeletePayment(pm)}
+                        >
+                          Excluir
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+
+            <p className="field-hint">
+              Formas desativadas não aparecem na tela de pagamento do caixa. Formas que já foram
+              usadas em vendas não podem ser excluídas.
+            </p>
+          </>
+        )}
       </main>
 
       {formOpen && (
@@ -384,6 +508,17 @@ export default function App() {
           onSaved={() => {
             setCustomerFormOpen(false)
             reloadCustomers()
+          }}
+        />
+      )}
+
+      {paymentFormOpen && (
+        <PaymentMethodFormModal
+          paymentMethod={editingPayment}
+          onClose={() => setPaymentFormOpen(false)}
+          onSaved={() => {
+            setPaymentFormOpen(false)
+            reloadPaymentMethods()
           }}
         />
       )}

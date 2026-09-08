@@ -11,11 +11,20 @@ namespace ConvenienceStore.Api.Controllers;
 [Route("api/sales")]
 public class SalesController(AppDbContext db, SolanaPayBridgeClient solanaPay) : ControllerBase
 {
+    private const int SolanaPayId = 4;
+
     [HttpPost]
     public async Task<ActionResult<SaleResponse>> Create(CreateSaleRequest request, CancellationToken ct)
     {
         if (request.Items.Count == 0)
             return BadRequest(new { message = "A sale must have at least one item." });
+
+        var paymentMethod = await db.PaymentMethods
+            .AsNoTracking()
+            .FirstOrDefaultAsync(pm => pm.Id == request.PaymentMethodId);
+
+        if (paymentMethod is null || !paymentMethod.IsActive)
+            return BadRequest(new { message = "Esta forma de pagamento não está disponível." });
 
         var buildResult = BuildSale(request);
         if (buildResult.Error is not null)
@@ -23,7 +32,7 @@ public class SalesController(AppDbContext db, SolanaPayBridgeClient solanaPay) :
 
         var sale = buildResult.Sale!;
 
-        if (request.PaymentMethod == PaymentMethod.SolanaPay)
+        if (request.PaymentMethodId == SolanaPayId)
         {
             var orderId = $"POS-{Guid.NewGuid():N}"[..12];
             var payment = await solanaPay.RequestPaymentAsync(sale.TotalAmount, orderId, ct);
@@ -79,7 +88,7 @@ public class SalesController(AppDbContext db, SolanaPayBridgeClient solanaPay) :
             });
         }
 
-        sale.PaymentMethod = request.PaymentMethod;
+        sale.PaymentMethodId = request.PaymentMethodId;
         sale.AmountPaid = request.AmountPaid;
 
         if (sale.AmountPaid < sale.TotalAmount)
@@ -96,6 +105,7 @@ public class SalesController(AppDbContext db, SolanaPayBridgeClient solanaPay) :
         var sales = await db.Sales
             .AsNoTracking()
             .Include(s => s.Items)
+            .Include(s => s.PaymentMethod)
             .OrderByDescending(s => s.CreatedAt)
             .Take(Math.Clamp(limit, 1, 500))
             .ToListAsync();
@@ -109,6 +119,7 @@ public class SalesController(AppDbContext db, SolanaPayBridgeClient solanaPay) :
         var sale = await db.Sales
             .AsNoTracking()
             .Include(s => s.Items)
+            .Include(s => s.PaymentMethod)
             .FirstOrDefaultAsync(s => s.Id == id);
 
         return sale is null ? NotFound() : Ok(sale.ToResponse());

@@ -1,4 +1,4 @@
-import type { PaymentMethod, StockMovementType } from './types'
+import type { StockMovementType } from './types'
 
 export function formatCurrency(value: number): string {
   return new Intl.NumberFormat('pt-BR', {
@@ -28,21 +28,8 @@ export function movementTypeLabel(type: StockMovementType): string {
   }
 }
 
-export function paymentMethodLabel(method: PaymentMethod): string {
-  switch (method) {
-    case 1:
-      return 'Dinheiro'
-    case 2:
-      return 'Cartão'
-    case 3:
-      return 'Pix'
-    case 4:
-      return 'Solana Pay'
-  }
-}
-
-export function paymentMethodIcon(method: PaymentMethod): string {
-  switch (method) {
+export function paymentMethodIcon(methodId: number): string {
+  switch (methodId) {
     case 1:
       return '💵'
     case 2:
@@ -51,5 +38,7 @@ export function paymentMethodIcon(method: PaymentMethod): string {
       return '📱'
     case 4:
       return '⚡'
+    default:
+      return '💲'
   }
 }

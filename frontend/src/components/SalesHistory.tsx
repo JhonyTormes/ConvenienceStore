@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { api } from '../api'
-import { formatCurrency, formatDate, paymentMethodIcon, paymentMethodLabel } from '../format'
+import { formatCurrency, formatDate, paymentMethodIcon } from '../format'
 import type { Sale } from '../types'
 import Modal from './Modal'
 
@@ -8,8 +8,8 @@ function SaleDetailModal({ sale, onClose }: { sale: Sale; onClose: () => void })
   return (
     <Modal title={`Venda #${sale.id}`} onClose={onClose}>
       <p className="sale-detail-meta">
-        {formatDate(sale.createdAt)} · {paymentMethodIcon(sale.paymentMethod)}{' '}
-        {paymentMethodLabel(sale.paymentMethod)}
+        {formatDate(sale.createdAt)} · {paymentMethodIcon(sale.paymentMethodId)}{' '}
+        {sale.paymentMethodName}
       </p>
       <table className="table">
         <thead>
@@ -92,7 +92,7 @@ export default function SalesHistory() {
                 <td>{formatDate(sale.createdAt)}</td>
                 <td>#{sale.id}</td>
                 <td>
-                  {paymentMethodIcon(sale.paymentMethod)} {paymentMethodLabel(sale.paymentMethod)}
+                  {paymentMethodIcon(sale.paymentMethodId)} {sale.paymentMethodName}
                 </td>
                 <td className="align-right">{sale.items.length}</td>
                 <td className="align-right">{formatCurrency(sale.totalAmount)}</td>

@@ -1,13 +1,5 @@
 namespace ConvenienceStore.Api.Models;
 
-public enum PaymentMethod
-{
-    Cash = 1,
-    Card = 2,
-    Pix = 3,
-    SolanaPay = 4
-}
-
 public class Sale
 {
     public int Id { get; set; }
@@ -16,7 +8,9 @@ public class Sale
 
     public decimal TotalAmount { get; set; }
 
-    public PaymentMethod PaymentMethod { get; set; }
+    public int PaymentMethodId { get; set; }
+
+    public PaymentMethod PaymentMethod { get; set; } = null!;
 
     public decimal AmountPaid { get; set; }
 

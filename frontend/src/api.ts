@@ -1,13 +1,16 @@
 import type {
   AdjustStockRequest,
   CreateCustomerRequest,
+  CreatePaymentMethodRequest,
   CreateProductRequest,
   CreateSaleRequest,
   Customer,
+  PaymentMethod,
   Product,
   Sale,
   StockMovement,
   UpdateCustomerRequest,
+  UpdatePaymentMethodRequest,
   UpdateProductRequest,
 } from './types'
 
@@ -87,4 +90,22 @@ export const api = {
 
   deleteCustomer: (id: number) =>
     request<void>(`/customers/${id}`, { method: 'DELETE' }),
+
+  getPaymentMethods: (activeOnly = false) =>
+    request<PaymentMethod[]>(`/payment-methods${activeOnly ? '?activeOnly=true' : ''}`),
+
+  createPaymentMethod: (data: CreatePaymentMethodRequest) =>
+    request<PaymentMethod>('/payment-methods', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  updatePaymentMethod: (id: number, data: UpdatePaymentMethodRequest) =>
+    request<PaymentMethod>(`/payment-methods/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+
+  deletePaymentMethod: (id: number) =>
+    request<void>(`/payment-methods/${id}`, { method: 'DELETE' }),
 }

@@ -10,6 +10,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Sale> Sales => Set<Sale>();
     public DbSet<SaleItem> SaleItems => Set<SaleItem>();
     public DbSet<Customer> Customers => Set<Customer>();
+    public DbSet<PaymentMethod> PaymentMethods => Set<PaymentMethod>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -35,6 +36,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(s => s.TotalAmount).HasColumnType("decimal(18,2)");
             entity.Property(s => s.AmountPaid).HasColumnType("decimal(18,2)");
             entity.Property(s => s.ChangeAmount).HasColumnType("decimal(18,2)");
+            entity.HasOne(s => s.PaymentMethod)
+                .WithMany()
+                .HasForeignKey(s => s.PaymentMethodId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<SaleItem>(entity =>
@@ -52,6 +57,16 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         {
             entity.Property(c => c.Name).IsRequired();
             entity.HasIndex(c => c.Cpf).IsUnique();
+        });
+
+        modelBuilder.Entity<PaymentMethod>(entity =>
+        {
+            entity.Property(pm => pm.Name).IsRequired();
+            entity.HasData(
+                new PaymentMethod { Id = 1, Name = "Dinheiro", IsActive = true, DisplayOrder = 1 },
+                new PaymentMethod { Id = 2, Name = "Cartão", IsActive = true, DisplayOrder = 2 },
+                new PaymentMethod { Id = 3, Name = "Pix", IsActive = true, DisplayOrder = 3 },
+                new PaymentMethod { Id = 4, Name = "Solana Pay", IsActive = true, DisplayOrder = 4 });
         });
     }
 }

@@ -44,7 +44,21 @@ export interface AdjustStockRequest {
   reason?: string
 }
 
-export type PaymentMethod = 1 | 2 | 3 | 4
+export interface PaymentMethod {
+  id: number
+  name: string
+  isActive: boolean
+  displayOrder: number
+}
+
+export interface CreatePaymentMethodRequest {
+  name: string
+}
+
+export interface UpdatePaymentMethodRequest {
+  name: string
+  isActive: boolean
+}
 
 export interface SaleItem {
   id: number
@@ -59,7 +73,8 @@ export interface Sale {
   id: number
   createdAt: string
   totalAmount: number
-  paymentMethod: PaymentMethod
+  paymentMethodId: number
+  paymentMethodName: string
   amountPaid: number
   changeAmount: number
   paymentSignature?: string | null
@@ -73,7 +88,7 @@ export interface SaleItemRequest {
 
 export interface CreateSaleRequest {
   items: SaleItemRequest[]
-  paymentMethod: PaymentMethod
+  paymentMethodId: number
   amountPaid: number
 }
 
