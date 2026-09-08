@@ -168,7 +168,7 @@ export default function App() {
   return (
     <div className="app">
       <header className="app-header">
-        <h1>🏪 Convenience Store</h1>
+        <h1>MP Conveniência</h1>
         <nav>
           {TABS.map((t) => (
             <button

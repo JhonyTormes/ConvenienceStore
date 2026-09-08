@@ -1,4 +1,4 @@
-import { useRef, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { api } from '../api'
 import { formatCurrency, paymentMethodIcon, paymentMethodLabel } from '../format'
 import type { PaymentMethod, Sale, SaleItemRequest } from '../types'
@@ -20,6 +20,9 @@ export default function PaymentModal({ total, items, onClose, onComplete }: Paym
   const [saving, setSaving] = useState(false)
   const [waiting, setWaiting] = useState(false)
   const abortRef = useRef<AbortController | null>(null)
+  const receivedRef = useRef<HTMLInputElement>(null)
+  const formRef = useRef<HTMLFormElement>(null)
+  const waitingRef = useRef<HTMLDivElement>(null)
 
   const isCash = method === 1
   const isSolana = method === 4
@@ -28,9 +31,13 @@ export default function PaymentModal({ total, items, onClose, onComplete }: Paym
   const amountPaid = isCash ? receivedValue : total
   const canConfirm = isCash ? receivedValue >= total : true
 
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault()
-    if (!canConfirm) return
+  function cancelWaiting() {
+    abortRef.current?.abort()
+    setWaiting(false)
+  }
+
+  async function submitSale() {
+    if (!canConfirm || saving || waiting) return
     setError(null)
 
     if (isSolana) {
@@ -66,15 +73,59 @@ export default function PaymentModal({ total, items, onClose, onComplete }: Paym
     }
   }
 
-  function cancelWaiting() {
-    abortRef.current?.abort()
-    setWaiting(false)
+  const submitRef = useRef(submitSale)
+  useEffect(() => {
+    submitRef.current = submitSale
+  })
+
+  useEffect(() => {
+    if (waiting) waitingRef.current?.focus()
+    else formRef.current?.focus()
+  }, [waiting])
+
+  function selectMethod(m: PaymentMethod) {
+    setMethod(m)
+    setError(null)
+    if (m === 1) receivedRef.current?.focus()
   }
+
+  useEffect(() => {
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        if (waiting) cancelWaiting()
+        else onClose()
+        return
+      }
+
+      if (waiting) return
+
+      const target = e.target as HTMLElement
+      if (target.tagName === 'INPUT') {
+        if (e.key === 'Enter' && canConfirm) submitRef.current()
+        return
+      }
+
+      const num = Number(e.key)
+      if (num >= 1 && num <= METHODS.length) {
+        e.preventDefault()
+        selectMethod(num as PaymentMethod)
+        return
+      }
+
+      if (e.key === 'Enter' && canConfirm) {
+        e.preventDefault()
+        submitRef.current()
+      }
+    }
+    window.addEventListener('keydown', handleKey)
+    return () => window.removeEventListener('keydown', handleKey)
+  }, [waiting, canConfirm, onClose])
 
   if (waiting) {
     return (
       <Modal title="Pagamento com Solana Pay" onClose={cancelWaiting}>
-        <div className="solana-waiting">
+        <div className="solana-waiting" ref={waitingRef} tabIndex={-1}>
           <span className="solana-waiting-icon">⚡</span>
           <p className="solana-waiting-text">
             Peça ao cliente para escanear o <strong>QR Code na tela do caixa</strong> e pagar com a
@@ -93,13 +144,18 @@ export default function PaymentModal({ total, items, onClose, onComplete }: Paym
     )
   }
 
+  function handleSubmit(e: FormEvent) {
+    e.preventDefault()
+    submitSale()
+  }
+
   return (
     <Modal title="Pagamento" onClose={onClose}>
       <p className="payment-total">
         Total: <strong>{formatCurrency(total)}</strong>
       </p>
 
-      <form onSubmit={handleSubmit}>
+      <form className="payment-form" onSubmit={handleSubmit} ref={formRef} tabIndex={-1}>
         <label>Forma de pagamento</label>
         <div className="payment-methods">
           {METHODS.map((m) => (
@@ -107,11 +163,9 @@ export default function PaymentModal({ total, items, onClose, onComplete }: Paym
               key={m}
               type="button"
               className={`btn payment-method ${method === m ? 'payment-method-active' : ''}`}
-              onClick={() => {
-                setMethod(m)
-                setError(null)
-              }}
+              onClick={() => selectMethod(m)}
             >
+              <span className="payment-method-key">{m}</span>
               <span className="payment-method-icon">{paymentMethodIcon(m)}</span>
               {paymentMethodLabel(m)}
             </button>
@@ -123,13 +177,13 @@ export default function PaymentModal({ total, items, onClose, onComplete }: Paym
             <label>
               Valor recebido (R$)
               <input
+                ref={receivedRef}
                 type="number"
                 value={received}
                 onChange={(e) => setReceived(e.target.value)}
                 min="0"
                 step="0.01"
                 placeholder="Digite quanto o cliente pagou"
-                autoFocus
               />
             </label>
             <div className={`change-box ${change > 0 ? 'change-box-positive' : ''}`}>
@@ -159,6 +213,11 @@ export default function PaymentModal({ total, items, onClose, onComplete }: Paym
             {saving ? 'Finalizando...' : isSolana ? '⚡ Mostrar QR Code' : '✅ Confirmar venda'}
           </button>
         </div>
+
+        <p className="field-hint">
+          Aperte 1 a 4 para escolher a forma de pagamento e Enter para confirmar. Em Dinheiro,
+          digite o valor recebido.
+        </p>
       </form>
     </Modal>
   )

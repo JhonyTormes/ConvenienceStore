@@ -26,9 +26,9 @@ body {
 }
 
 .app {
-  max-width: 1100px;
+  width: 100%;
   margin: 0 auto;
-  padding: 24px 20px 60px;
+  padding: 16px 20px 24px;
 }
 
 .app-header {
@@ -244,6 +244,14 @@ nav {
   padding: 32px 0;
 }
 
+.pdv-right .empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
 .form-error {
   color: var(--danger);
   font-size: 14px;
@@ -344,14 +352,16 @@ nav {
 
 .pdv {
   display: grid;
-  grid-template-columns: 1.3fr 1fr;
+  grid-template-columns: 1.4fr 1fr;
   gap: 20px;
-  align-items: start;
+  align-items: stretch;
+  min-height: calc(100vh - 150px);
 }
 
 @media (max-width: 900px) {
   .pdv {
     grid-template-columns: 1fr;
+    min-height: auto;
   }
 }
 
@@ -360,13 +370,18 @@ nav {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 12px;
-  padding: 16px;
+  padding: 20px;
+}
+
+.pdv-left {
+  display: flex;
+  flex-direction: column;
 }
 
 .pdv-search {
   width: 100%;
-  padding: 16px 18px;
-  font-size: 18px;
+  padding: 18px 20px;
+  font-size: 20px;
   border: 2px solid var(--border);
   border-radius: 10px;
   background: #fff;
@@ -379,18 +394,21 @@ nav {
 
 .product-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 10px;
-  margin-top: 14px;
-  max-height: 420px;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+  align-content: start;
+  flex: 1;
   overflow-y: auto;
 }
 
 .product-card {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 14px;
+  justify-content: center;
+  gap: 6px;
+  padding: 18px 16px;
+  min-height: 104px;
   border: 2px solid var(--border);
   border-radius: 10px;
   background: #fff;
@@ -405,24 +423,25 @@ nav {
 }
 
 .product-card-name {
-  font-size: 15px;
+  font-size: 17px;
   font-weight: 600;
   color: var(--text);
 }
 
 .product-card-price {
-  font-size: 18px;
+  font-size: 22px;
   font-weight: 700;
   color: var(--primary);
 }
 
 .product-card-stock {
-  font-size: 13px;
+  font-size: 14px;
   color: var(--text-muted);
 }
 
 .pdv-help {
-  margin-top: 14px;
+  margin-top: auto;
+  padding-top: 14px;
   font-size: 14px;
   color: var(--text-muted);
 }
@@ -457,16 +476,16 @@ nav {
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  max-height: 360px;
+  gap: 10px;
+  flex: 1;
   overflow-y: auto;
 }
 
 .cart-item {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 10px;
+  gap: 8px;
+  padding: 14px;
   border: 1px solid var(--border);
   border-radius: 10px;
   background: #fff;
@@ -480,11 +499,12 @@ nav {
 
 .cart-item-name {
   font-weight: 600;
+  font-size: 16px;
 }
 
 .cart-item-price {
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .cart-item-controls {
@@ -494,54 +514,55 @@ nav {
 }
 
 .btn-round {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   padding: 0;
   border-radius: 50%;
-  font-size: 20px;
+  font-size: 22px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
 }
 
 .cart-item-qty {
-  min-width: 24px;
+  min-width: 28px;
   text-align: center;
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 700;
 }
 
 .cart-item-subtotal {
   margin-left: auto;
   font-weight: 700;
+  font-size: 16px;
 }
 
 .pdv-total {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 14px;
+  padding: 16px;
   background: #f0fdf4;
   border: 2px solid var(--primary);
   border-radius: 10px;
 }
 
 .pdv-total span {
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 700;
   text-transform: uppercase;
   color: var(--primary);
 }
 
 .pdv-total strong {
-  font-size: 28px;
+  font-size: 32px;
   color: var(--primary);
 }
 
 .btn-big {
   width: 100%;
-  padding: 18px;
-  font-size: 20px;
+  padding: 20px;
+  font-size: 22px;
   font-weight: 700;
   border-radius: 12px;
 }
@@ -552,6 +573,11 @@ nav {
 }
 
 /* ---------- Pagamento ---------- */
+
+.payment-form:focus,
+.solana-waiting:focus {
+  outline: none;
+}
 
 .payment-total {
   font-size: 18px;
@@ -586,6 +612,22 @@ nav {
 
 .payment-method-icon {
   font-size: 28px;
+}
+
+.payment-method-key {
+  align-self: flex-end;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0 5px;
+  line-height: 1.4;
+}
+
+.payment-method-active .payment-method-key {
+  color: var(--primary);
+  border-color: var(--primary);
 }
 
 .payment-method-active {

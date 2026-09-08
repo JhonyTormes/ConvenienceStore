@@ -29,6 +29,23 @@ export default function PdvPage() {
   }, [])
 
   useEffect(() => {
+    if (!paymentOpen && !finishedSale) inputRef.current?.focus()
+  }, [paymentOpen, finishedSale])
+
+  useEffect(() => {
+    function handleGlobalKey(e: KeyboardEvent) {
+      if (e.key !== 'f' && e.key !== 'F') return
+      if (paymentOpen || finishedSale || cart.length === 0) return
+      const target = e.target as HTMLElement
+      if (target.tagName === 'INPUT' && (target as HTMLInputElement).value.trim() !== '') return
+      e.preventDefault()
+      setPaymentOpen(true)
+    }
+    window.addEventListener('keydown', handleGlobalKey)
+    return () => window.removeEventListener('keydown', handleGlobalKey)
+  }, [cart.length, paymentOpen, finishedSale])
+
+  useEffect(() => {
     if (mode !== 'product') return
     const timer = setTimeout(async () => {
       const search = term.trim()
@@ -205,7 +222,7 @@ export default function PdvPage() {
         )}
 
         <div className="pdv-help">
-          <p>💡 Digite o nome do produto e toque nele, ou bata o código de barras. Aperte x para digitar a quantidade.</p>
+          <p>💡 Digite o nome do produto e toque nele, ou bata o código de barras. Aperte x para digitar a quantidade e f para finalizar a venda.</p>
         </div>
       </section>
 
