@@ -77,6 +77,9 @@ export const api = {
 
   getSale: (id: number) => request<Sale>(`/sales/${id}`),
 
+  cancelSale: (id: number) =>
+    request<Sale>(`/sales/${id}/cancel`, { method: 'POST' }),
+
   getCustomers: (search?: string) =>
     request<Customer[]>(
       `/customers${search ? `?search=${encodeURIComponent(search)}` : ''}`,

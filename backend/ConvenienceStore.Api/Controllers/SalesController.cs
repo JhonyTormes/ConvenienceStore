@@ -124,4 +124,49 @@ public class SalesController(AppDbContext db, SolanaPayBridgeClient solanaPay) :
 
         return sale is null ? NotFound() : Ok(sale.ToResponse());
     }
+
+    [HttpPost("{id:int}/cancel")]
+    public async Task<ActionResult<SaleResponse>> Cancel(int id)
+    {
+        var sale = await db.Sales
+            .Include(s => s.Items)
+            .Include(s => s.PaymentMethod)
+            .FirstOrDefaultAsync(s => s.Id == id);
+
+        if (sale is null)
+            return NotFound();
+
+        if (sale.IsCanceled)
+            return Conflict(new { message = "Esta venda já foi cancelada." });
+
+        var productIds = sale.Items.Select(i => i.ProductId).Distinct().ToList();
+        var products = await db.Products
+            .Where(p => productIds.Contains(p.Id))
+            .ToDictionaryAsync(p => p.Id);
+
+        var now = DateTime.UtcNow;
+
+        foreach (var item in sale.Items)
+        {
+            if (!products.TryGetValue(item.ProductId, out var product))
+                continue;
+
+            product.StockQuantity += item.Quantity;
+            product.UpdatedAt = now;
+            product.StockMovements.Add(new StockMovement
+            {
+                Type = StockMovementType.In,
+                QuantityChange = item.Quantity,
+                StockAfter = product.StockQuantity,
+                Reason = "Sale canceled"
+            });
+        }
+
+        sale.IsCanceled = true;
+        sale.CanceledAt = now;
+
+        await db.SaveChangesAsync();
+
+        return Ok(sale.ToResponse());
+    }
 }

@@ -4,13 +4,46 @@ import { formatCurrency, formatDate, paymentMethodIcon } from '../format'
 import type { Sale } from '../types'
 import Modal from './Modal'
 
-function SaleDetailModal({ sale, onClose }: { sale: Sale; onClose: () => void }) {
+function SaleDetailModal({
+  sale,
+  onClose,
+  onCanceled,
+}: {
+  sale: Sale
+  onClose: () => void
+  onCanceled: (sale: Sale) => void
+}) {
+  const [canceling, setCanceling] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  async function handleCancel() {
+    if (!window.confirm(`Cancelar a venda #${sale.id}? O estoque dos produtos será devolvido.`)) {
+      return
+    }
+    setCanceling(true)
+    setError(null)
+    try {
+      onCanceled(await api.cancelSale(sale.id))
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Falha ao cancelar a venda.')
+      setCanceling(false)
+    }
+  }
+
   return (
     <Modal title={`Venda #${sale.id}`} onClose={onClose}>
       <p className="sale-detail-meta">
         {formatDate(sale.createdAt)} · {paymentMethodIcon(sale.paymentMethodId)}{' '}
         {sale.paymentMethodName}
       </p>
+
+      {sale.isCanceled && (
+        <p className="form-error">
+          Venda cancelada{sale.canceledAt ? ` em ${formatDate(sale.canceledAt)}` : ''}. O estoque
+          dos produtos foi devolvido.
+        </p>
+      )}
+
       <table className="table">
         <thead>
           <tr>
@@ -31,6 +64,7 @@ function SaleDetailModal({ sale, onClose }: { sale: Sale; onClose: () => void })
           ))}
         </tbody>
       </table>
+
       <div className="sale-detail-footer">
         <p>
           Total: <strong>{formatCurrency(sale.totalAmount)}</strong>
@@ -39,6 +73,24 @@ function SaleDetailModal({ sale, onClose }: { sale: Sale; onClose: () => void })
         {sale.changeAmount > 0 && <p>Troco: {formatCurrency(sale.changeAmount)}</p>}
         {sale.paymentSignature && (
           <p className="sale-detail-signature">Assinatura: {sale.paymentSignature}</p>
+        )}
+      </div>
+
+      {error && <p className="form-error">{error}</p>}
+
+      <div className="form-actions">
+        <button type="button" className="btn" onClick={onClose}>
+          Fechar
+        </button>
+        {!sale.isCanceled && (
+          <button
+            type="button"
+            className="btn btn-danger"
+            onClick={handleCancel}
+            disabled={canceling}
+          >
+            {canceling ? 'Cancelando...' : 'Cancelar venda'}
+          </button>
         )}
       </div>
     </Modal>
@@ -60,6 +112,11 @@ export default function SalesHistory() {
   useEffect(() => {
     load()
   }, [load])
+
+  function handleCanceled(updated: Sale) {
+    setSelected(updated)
+    load()
+  }
 
   return (
     <div>
@@ -90,7 +147,10 @@ export default function SalesHistory() {
             {sales.map((sale) => (
               <tr key={sale.id}>
                 <td>{formatDate(sale.createdAt)}</td>
-                <td>#{sale.id}</td>
+                <td>
+                  #{sale.id}{' '}
+                  {sale.isCanceled && <span className="badge badge-2">Cancelada</span>}
+                </td>
                 <td>
                   {paymentMethodIcon(sale.paymentMethodId)} {sale.paymentMethodName}
                 </td>
@@ -107,7 +167,13 @@ export default function SalesHistory() {
         </table>
       )}
 
-      {selected && <SaleDetailModal sale={selected} onClose={() => setSelected(null)} />}
+      {selected && (
+        <SaleDetailModal
+          sale={selected}
+          onClose={() => setSelected(null)}
+          onCanceled={handleCanceled}
+        />
+      )}
     </div>
   )
 }

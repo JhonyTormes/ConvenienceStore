@@ -152,11 +152,17 @@ namespace ConvenienceStore.Api.Migrations
                     b.Property<decimal>("AmountPaid")
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<DateTime?>("CanceledAt")
+                        .HasColumnType("TEXT");
+
                     b.Property<decimal>("ChangeAmount")
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsCanceled")
+                        .HasColumnType("INTEGER");
 
                     b.Property<int>("PaymentMethodId")
                         .HasColumnType("INTEGER");

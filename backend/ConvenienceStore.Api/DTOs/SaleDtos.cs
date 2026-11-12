@@ -31,6 +31,8 @@ public class SaleResponse
     public decimal AmountPaid { get; set; }
     public decimal ChangeAmount { get; set; }
     public string? PaymentSignature { get; set; }
+    public bool IsCanceled { get; set; }
+    public DateTime? CanceledAt { get; set; }
     public List<SaleItemResponse> Items { get; set; } = [];
 }
 
@@ -55,6 +57,8 @@ public static class SaleMapper
         AmountPaid = sale.AmountPaid,
         ChangeAmount = sale.ChangeAmount,
         PaymentSignature = sale.PaymentSignature,
+        IsCanceled = sale.IsCanceled,
+        CanceledAt = sale.CanceledAt,
         Items = sale.Items.Select(i => new SaleItemResponse
         {
             ProductId = i.ProductId,

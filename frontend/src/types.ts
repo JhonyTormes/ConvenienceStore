@@ -78,6 +78,8 @@ export interface Sale {
   amountPaid: number
   changeAmount: number
   paymentSignature?: string | null
+  isCanceled: boolean
+  canceledAt?: string | null
   items: SaleItem[]
 }
 

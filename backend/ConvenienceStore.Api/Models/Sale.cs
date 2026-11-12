@@ -18,6 +18,10 @@ public class Sale
 
     public string? PaymentSignature { get; set; }
 
+    public bool IsCanceled { get; set; }
+
+    public DateTime? CanceledAt { get; set; }
+
     public List<SaleItem> Items { get; set; } = [];
 }
 
